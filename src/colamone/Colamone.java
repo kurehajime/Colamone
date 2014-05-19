@@ -16,6 +16,7 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
@@ -34,63 +35,66 @@ public class Colamone extends Application {
     private final int PANE_SIZE = 100;
     private final int PANE_COUNT = 6;
     private Map<Integer, Integer> map = new HashMap<>();
+    final List<Piece> pieces = new ArrayList<>();
     
-
-    @Override   
-    public void start(Stage primaryStage) {
-        StackPane root = new StackPane();
-        Scene scene = new Scene(root, 600, 600);
-        final Desk desk = new Desk();
-
-        //コマを配置
-        initMap();
-        final List<Piece> pieces = new ArrayList<>();
-        map.entrySet().stream()
-                .filter((entry)->entry.getValue()!=0)
-                .map((entry) -> {
-                    int x=((int) Math.ceil(entry.getKey()/10))*PANE_SIZE;
-                    int y=((int) Math.ceil(entry.getKey()%10))*PANE_SIZE;
-                    final Piece piece = new Piece(x, y,entry.getValue());
-                    return piece;
-                }).forEach((piece) -> {
-                    pieces.add(piece);
-                });
-        desk.getChildren().addAll(pieces);
-        
-        //盤を配置
-        root.getChildren().addAll(desk);
-
-        primaryStage.setTitle("Colamone");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
-    
-    
-    private void initMap(){
-        map= new HashMap<>();
-        map.put(0,-1);map.put(10,-2);map.put(20,-3);map.put(30,-4);map.put(40,-5);map.put(50,-6);
-        map.put(1, 0); map.put(11,-8);map.put(21, 0);map.put(31, 0);map.put(41,-7);map.put(51, 0);
-        map.put(2, 0); map.put(12, 0);map.put(22, 0);map.put(32, 0);map.put(42, 0);map.put(52, 0);
-        map.put(3, 0); map.put(13, 0);map.put(23, 0);map.put(33, 0);map.put(43, 0);map.put(53, 0);
-        map.put(4, 0); map.put(14, 7);map.put(24, 0);map.put(34, 0);map.put(44, 8);map.put(54, 0);
-        map.put(5, 6); map.put(15, 5);map.put(25, 4);map.put(35, 3);map.put(45, 2);map.put(55, 1);
-    }
-    private void shuffleMap(){
-        
-    }
-    
-    
-
-    /**
+     /**
+      * main
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         launch(args);
     }
 
-    /**
-     * *
-     * ボードを描画
+    /***
+     * 初期表示
+     * @param primaryStage 
+     */
+    @Override   
+    public void start(Stage primaryStage) {
+        StackPane root = new StackPane();
+        Scene scene = new Scene(root, 600, 600);
+        final Desk desk = new Desk();
+
+        //コマを生成
+        for(int i=1;i<=8;i++){
+            pieces.add(new Piece(0,0, i));
+            pieces.add(new Piece(0,0, -1*i));
+        }
+        desk.getChildren().addAll(pieces);
+        
+        //コマを配置
+        this.map=Rule.shuffleMap();
+        drawPieaceAll(this.map);
+        
+        //盤を配置
+        root.getChildren().addAll(desk);
+        
+        primaryStage.setTitle("Colamone");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+    
+    /***
+     * コマをすべて描画
+     * @param wkMap 
+     */
+    private void drawPieaceAll(Map<Integer, Integer> wkMap){
+        wkMap.entrySet().stream()
+                .filter((entry)->entry.getValue()!=0)
+                .forEach((entry) -> {
+                    int x=((int) Math.ceil(entry.getKey()/10))*PANE_SIZE;
+                    int y=((int) Math.ceil(entry.getKey()%10))*PANE_SIZE;
+                    pieces.stream()
+                            .filter((p)->p.number==entry.getValue())
+                            .forEach((p)->{
+                                p.setLayoutX(x);
+                                p.setLayoutY(y);
+                            });
+                }); 
+    }
+    
+    /***
+     * ボードクラス
      */
     class Desk extends Pane {
 
@@ -128,16 +132,24 @@ public class Colamone extends Application {
         }
     }
 
+    /***
+     * コマクラス
+     */
     public static final class Piece extends Parent {
         private final double correctX;
         private final double correctY;
-        private final int number;
+        public final int number;
 
         private final Shape pieceStroke;
         private final Color piece_color;
         private final int PANE_SIZE = 100;
         
-        
+        /***
+         * コントラスタ
+         * @param correctX
+         * @param correctY
+         * @param number 
+         */
         public Piece(final double correctX, final double correctY,int number) {
             this.correctX = correctX;
             this.correctY = correctY;
@@ -149,10 +161,6 @@ public class Colamone extends Application {
                 piece_color=Color.rgb(255, 0, 0);
             }
             
-            // 枠線
-            pieceStroke = createPiece();
-            pieceStroke.setFill(piece_color);
-            setFocusTraversable(true);
             
             //文字
             Text text=new Text();
@@ -162,17 +170,38 @@ public class Colamone extends Application {
             text.setLayoutX(this.correctX+PANE_SIZE/2-10);
             text.setLayoutY(this.correctY+PANE_SIZE/2+10);
             text.setFill(Color.WHITE);
-           
             
+            // 枠線
+            pieceStroke = createPiece();
+            pieceStroke.setFill(piece_color);
+            setFocusTraversable(true);
+            
+            
+            //コマと文字を貼り付け
             getChildren().addAll(pieceStroke,text);
+            
+            int[] move=Rule.getMoveArray(number);
+            for(int i=0;i<move.length;i++){
+                if(move[i]==0){
+                    continue;
+                }
+                double x=this.correctX+0.25*PANE_SIZE+( Math.floor (PANE_SIZE-0.25*PANE_SIZE)/3)*Math.floor(i % 3.0);
+                double y=this.correctY+0.25*PANE_SIZE+( Math.floor (PANE_SIZE-0.25*PANE_SIZE)/3)*Math.floor (i / 3.0);
+                Circle c1 = new Circle(PANE_SIZE*0.04,Color.WHITE);
+                c1.setLayoutX(x);
+                c1.setLayoutY(y);
+                getChildren().addAll(c1);
+            }
+            
             // キャッシュ有効化
             setCache(true);
             setActive();
         }
         
-        
-        
-        //ピースを描画
+        /***
+         * コマを描画
+         * @return 
+         */
         private Shape createPiece() {
             Polygon polygon = new Polygon();
             polygon.setLayoutX(correctX);
@@ -185,18 +214,23 @@ public class Colamone extends Application {
             return polygon;
         }
         
+        /***
+         * 有効化
+         */
         public void setActive() {
             setDisable(false);
+            setVisible(true);
             setEffect(new DropShadow());
             toFront();
         }
         
-        public double getCorrectX() {
-            return correctX;
-        }
-
-        public double getCorrectY() {
-            return correctY;
+        /***
+         * 無効化
+         */
+        public void setNoActive() {
+            setDisable(true);
+            setVisible(false);
+            toBack();
         }
     }
 
