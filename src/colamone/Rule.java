@@ -14,10 +14,10 @@ import java.util.Map;
  *
  * @author gabill
  */
-final public class Rule {
+final public  class Rule {
 
     /**
-     * *
+     *
      * 動ける方向の配列を返す
      *
      * @param num
@@ -97,7 +97,7 @@ final public class Rule {
     }
 
     /**
-     * *
+     * 
      * 標準配置のマップを返す(テスト用)。
      *
      * @return
@@ -142,8 +142,9 @@ final public class Rule {
         wkMap.put(55, 1);
         return wkMap;
     }
-   /**
-     * *
+    
+    /**
+     * 
      * 空のマップを返す。
      *
      * @return
@@ -161,8 +162,9 @@ final public class Rule {
         }
         return wkMap;
     }
+    
     /**
-     * *
+     * 
      * ランダムマップを返す。
      *
      * @return
@@ -187,5 +189,93 @@ final public class Rule {
         
         return wkMap;
     }
-
+    
+    /***
+     * コマから座標を取得
+     * @param map
+     * @param number
+     * @return 
+     */
+    public static int getPosiotionByNumber(Map<Integer, Integer> map,int number){
+        for(int postion:map.keySet()){
+            if(map.get(postion)==number){
+                return postion;
+            }
+        }
+        return -1;
+    }
+    
+    /***
+     * コマを動かしたMAPを返す。
+     * @param map
+     * @param fromPosition
+     * @param toPosition
+     * @return 
+     */
+    public static Map<Integer, Integer> putMap(Map<Integer, Integer> map,int fromPosition,int toPosition){
+        Map<Integer, Integer> newMap=new HashMap<>(map);
+        newMap.put(fromPosition, 0);
+        newMap.put(toPosition, map.get(fromPosition));
+        
+        return newMap;
+    }
+    
+    /***
+     * 動かせるかどうかチェックする。
+     * @param map
+     * @param fromPosition
+     * @param toPosition
+     * @return 
+     */
+    public static boolean checkMap(Map<Integer, Integer> map,int fromPosition,int toPosition){
+        List<Integer> list=getMovalPosition(map,fromPosition);
+        return list.contains(toPosition);
+    }
+    
+    /***
+     * 動かせる場所の配列を返す。
+     * @param map
+     * @param position
+     * @return 
+     */
+    public static List<Integer> getMovalPosition(Map<Integer, Integer> map,int position){
+        List<Integer> list=new ArrayList<>();
+        int number=map.get(position);
+        if(number==0){
+            return list;
+        }
+        int x = (int)Math.floor(position / 10);
+        int y = (int)Math.floor(position % 10);
+        //アガリのコマは動かしたらダメ。
+        if(number>0 & y==0){
+            return list;   
+        }else if(number<0 &y==5){
+            return list;   
+        }
+        int[] PIECES=getMoveArray(number);
+        
+        for(int i=0;i<=PIECES.length-1;i++){
+            int target_x= (int)(x + Math.floor(i%3)-1);
+            int target_y= (int)(y + Math.floor(i/3)-1);
+            if(PIECES[i]==0){
+                continue;
+            }
+            if(target_x<0 || target_y<0|target_x>5|target_y>5 ){
+                continue;
+            }
+            int target_number=map.get(target_x*10+target_y);
+            if(target_number*number>0){
+                continue;   
+            }
+            //アガリのコマはとったらダメ。
+            if(target_number>0 & target_y==0){
+                continue;   
+            }else if(target_number<0 &target_y==5){
+                continue;
+            }
+            list.add(target_x*10+target_y);
+        }
+        return list;
+    }
+     
 }

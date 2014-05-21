@@ -13,6 +13,7 @@ import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -34,9 +35,28 @@ public class Colamone extends Application {
 
     private final int PANE_SIZE = 100;
     private final int PANE_COUNT = 6;
+    private  Scene scene;
+    private StackPane root;
+    private Desk desk;
+
+    /***
+     * 現在のマップ
+     */
     private Map<Integer, Integer> map = new HashMap<>();
+    /***
+     * ピースオブジェクトを格納
+     */
     final List<Piece> pieces = new ArrayList<>();
+    /***
+     * 持ち上げているコマ
+     */
+    private Piece hoverPiece=null;
     
+    /***
+     * 今のターン
+     */
+    private int thisTurn=0;
+
      /**
       * main
      * @param args the command line arguments
@@ -51,10 +71,9 @@ public class Colamone extends Application {
      */
     @Override   
     public void start(Stage primaryStage) {
-        StackPane root = new StackPane();
-        Scene scene = new Scene(root, 600, 600);
-        final Desk desk = new Desk();
-
+        root = new StackPane();
+        scene = new Scene(root, 600, 600);
+        desk = new Desk();
         //コマを生成
         for(int i=1;i<=8;i++){
             pieces.add(new Piece(0,0, i));
@@ -68,6 +87,15 @@ public class Colamone extends Application {
         
         //盤を配置
         root.getChildren().addAll(desk);
+        
+        desk.setOnMouseClicked((event)->{
+            clickEvent(event);
+        });
+        desk.setOnMouseMoved((event)->{
+            moveEvent(event);
+        });
+        
+        thisTurn=1;
         
         primaryStage.setTitle("Colamone");
         primaryStage.setScene(scene);
@@ -90,7 +118,11 @@ public class Colamone extends Application {
                                 p.setLayoutX(x);
                                 p.setLayoutY(y);
                             });
-                }); 
+                });
+        pieces.stream()
+                .filter((p)->Rule.getPosiotionByNumber(wkMap,p.number)==-1)
+                .forEach((p)->{p.setNoActive();});
+        
     }
     
     /***
@@ -139,10 +171,14 @@ public class Colamone extends Application {
         private final double correctX;
         private final double correctY;
         public final int number;
-
-        private final Shape pieceStroke;
-        private final Color piece_color;
+        private final Color RED=Color.rgb(255, 0, 0);
+        private final Color BLUE=Color.rgb(0, 0, 255);
+        private final Color RED_HOVER=Color.rgb(255, 60, 60);
+        private final Color BLUE_HOVER=Color.rgb(60, 60, 255);
+        private final Color RED_GOAL=Color.rgb(100, 0, 0);
+        private final Color BLUE_GOAL=Color.rgb(0, 0, 100);
         private final int PANE_SIZE = 100;
+        private Color piece_color;
         
         /***
          * コントラスタ
@@ -154,13 +190,20 @@ public class Colamone extends Application {
             this.correctX = correctX;
             this.correctY = correctY;
             this.number=number;
-            
             if(this.number>0){
-                piece_color=Color.rgb(0, 0, 255);
+                piece_color=BLUE;
             }else{
-                piece_color=Color.rgb(255, 0, 0);
+                piece_color=RED;
             }
-            
+            draw();
+        }
+        
+        /***
+         * 描画
+         */
+        private void draw(){
+            //いったん消す。
+            getChildren().removeAll();
             
             //文字
             Text text=new Text();
@@ -172,7 +215,7 @@ public class Colamone extends Application {
             text.setFill(Color.WHITE);
             
             // 枠線
-            pieceStroke = createPiece();
+            Shape pieceStroke = createPieceLine();
             pieceStroke.setFill(piece_color);
             setFocusTraversable(true);
             
@@ -198,11 +241,13 @@ public class Colamone extends Application {
             setActive();
         }
         
+        
+        
         /***
-         * コマを描画
+         * コマ枠を描画
          * @return 
          */
-        private Shape createPiece() {
+        private Shape createPieceLine() {
             Polygon polygon = new Polygon();
             polygon.setLayoutX(correctX);
             polygon.setLayoutY(correctY);
@@ -232,6 +277,121 @@ public class Colamone extends Application {
             setVisible(false);
             toBack();
         }
-    }
+        
+        /***
+         * 掴んだ時。
+         */
+        public void setHover(){
+            if(number>0){
+                piece_color=BLUE_HOVER;
+            }else{
+                piece_color=RED_HOVER;
+            }
+            draw();
+        }
+        /***
+         * 掴んだ時。
+         */
+        public void setDefault(){
+            if(number>0){
+                piece_color=BLUE;
+            }else{
+                piece_color=RED;
+            }
+            draw();
+        }
+        /***
+         * 掴んだ時。
+         */
+        public void setGoal(){
+            if(number>0){
+                piece_color=BLUE_GOAL;
+            }else{
+                piece_color=RED_GOAL;
+            }
+            draw();
+        }
 
+        
+    }
+    
+    /***
+     * クリックイベント
+     * @param event 
+     */
+    void clickEvent(MouseEvent event){
+        
+        double x=event.getSceneX()-desk.getLayoutX();
+        double y=event.getSceneY()-desk.getLayoutY();
+        int target_position = (int) (Math.floor(x/PANE_SIZE)*10+Math.floor(y/PANE_SIZE));
+        
+        if(hoverPiece==null){
+            //コマを持ち上げる
+            if(this.map.get(target_position)!=0&& this.map.get(target_position)*thisTurn>0){
+                hoverPiece=getPieceByPosition(this.map,target_position);
+                hoverPiece.setHover();
+                hoverPiece.toFront();
+                moveEvent(event);
+            }
+        }else{
+            //コマを置き換え
+            int prevPisition=Rule.getPosiotionByNumber(this.map,hoverPiece.number);
+            if(Rule.checkMap(this.map,prevPisition,target_position)){
+                this.map=Rule.putMap(map, prevPisition, target_position);
+                thisTurn=thisTurn*-1;
+            }else{
+                target_position=prevPisition;
+            }
+            int target_y = (int)Math.floor(target_position % 10);
+            if(this.map.get(target_position)>0 & target_y==0||this.map.get(target_position)<0 &target_y==5 ){
+                //ゴールした。
+                hoverPiece.setGoal();
+            }else{
+                //標準に戻す。
+                hoverPiece.setDefault();
+            }
+            
+            hoverPiece=null;
+            drawPieaceAll(this.map);
+        }
+        
+    }
+    /***
+     * マウス移動イベント
+     * @param event 
+     */
+    void moveEvent(MouseEvent event){
+        if(hoverPiece!=null){
+            
+            double x=event.getSceneX()-desk.getLayoutX();
+            double y=event.getSceneY()-desk.getLayoutY();
+            hoverPiece.setLayoutX(x-PANE_SIZE/2);
+            hoverPiece.setLayoutY(y-PANE_SIZE/2);
+        }
+    }
+    
+    /***
+     * 番号からピースを取得
+     * @param number
+     * @return 
+     */
+    Piece getPieceByNumber(int number){
+         for(Piece p:this.pieces){
+             if(p.number==number){
+                 return p;
+             }
+         }
+         return null;
+    }
+    
+    /***
+     * 位置からピースを取得
+     * @param map
+     * @param position
+     * @return 
+     */
+    Piece getPieceByPosition(Map<Integer, Integer> map,int position){
+        return getPieceByNumber(map.get(position));
+    }
+    
 }
