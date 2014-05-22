@@ -6,7 +6,6 @@
 package colamone;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javafx.application.Application;
@@ -42,7 +41,7 @@ public class Colamone extends Application {
     /***
      * 現在のマップ
      */
-    private Map<Integer, Integer> map = new HashMap<>();
+    private Board board = new Board(true);
     /***
      * ピースオブジェクトを格納
      */
@@ -82,8 +81,8 @@ public class Colamone extends Application {
         desk.getChildren().addAll(pieces);
         
         //コマを配置
-        this.map=Rule.shuffleMap();
-        drawPieaceAll(this.map);
+        this.board=new Board(true);
+        drawPieaceAll(this.board);
         
         //盤を配置
         root.getChildren().addAll(desk);
@@ -120,9 +119,8 @@ public class Colamone extends Application {
                             });
                 });
         pieces.stream()
-                .filter((p)->Rule.getPosiotionByNumber(wkMap,p.number)==-1)
+                .filter((p)->board.getPosiotionByNumber(p.number)==-1)
                 .forEach((p)->{p.setNoActive();});
-        
     }
     
     /***
@@ -223,7 +221,7 @@ public class Colamone extends Application {
             //コマと文字を貼り付け
             getChildren().addAll(pieceStroke,text);
             
-            int[] move=Rule.getMoveArray(number);
+            int[] move=Board.getMoveArray(number);
             for(int i=0;i<move.length;i++){
                 if(move[i]==0){
                     continue;
@@ -327,23 +325,23 @@ public class Colamone extends Application {
         
         if(hoverPiece==null){
             //コマを持ち上げる
-            if(this.map.get(target_position)!=0&& this.map.get(target_position)*thisTurn>0){
-                hoverPiece=getPieceByPosition(this.map,target_position);
+            if(this.board.get(target_position)!=0&& this.board.get(target_position)*thisTurn>0){
+                hoverPiece=getPieceByPosition(this.board,target_position);
                 hoverPiece.setHover();
                 hoverPiece.toFront();
                 moveEvent(event);
             }
         }else{
             //コマを置き換え
-            int prevPisition=Rule.getPosiotionByNumber(this.map,hoverPiece.number);
-            if(Rule.checkMap(this.map,prevPisition,target_position)){
-                this.map=Rule.putMap(map, prevPisition, target_position);
+            int prevPisition=board.getPosiotionByNumber(hoverPiece.number);
+            if(board.checkBoard(prevPisition,target_position)){
+                this.board=board.putBoard(prevPisition, target_position);
                 thisTurn=thisTurn*-1;
             }else{
                 target_position=prevPisition;
             }
             int target_y = (int)Math.floor(target_position % 10);
-            if(this.map.get(target_position)>0 & target_y==0||this.map.get(target_position)<0 &target_y==5 ){
+            if(this.board.get(target_position)>0 & target_y==0||this.board.get(target_position)<0 &target_y==5 ){
                 //ゴールした。
                 hoverPiece.setGoal();
             }else{
@@ -352,7 +350,7 @@ public class Colamone extends Application {
             }
             
             hoverPiece=null;
-            drawPieaceAll(this.map);
+            drawPieaceAll(this.board);
         }
         
     }

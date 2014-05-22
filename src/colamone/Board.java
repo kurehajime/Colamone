@@ -5,17 +5,45 @@
  */
 package colamone;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
- *
+ * ボードクラス
  * @author gabill
  */
-final public  class Rule {
+final public  class Board implements Map<Integer, Integer>{
 
+    /***
+     * Map
+     */
+    Map<Integer, Integer> map;
+    
+    /***
+     * ボードクラス
+     * @param isRandom 
+     */
+    public Board(boolean isRandom) {
+        if(isRandom){
+            this.map = shuffleMap();
+        }else{
+            this.map = initMap();
+        }
+    }
+    
+    /***
+     * ボードクラス
+     * @param map 
+     */
+    public Board(Map<Integer, Integer> map){
+        this.map= new HashMap<>(map);
+    }
+    
     /**
      *
      * 動ける方向の配列を返す
@@ -102,7 +130,7 @@ final public  class Rule {
      *
      * @return
      */
-    public static Map<Integer, Integer> initMap() {
+    private static Board initMap() {
         Map<Integer, Integer> wkMap = new HashMap<>();
         wkMap.put(0, -1);
         wkMap.put(10, -2);
@@ -140,12 +168,12 @@ final public  class Rule {
         wkMap.put(35, 3);
         wkMap.put(45, 2);
         wkMap.put(55, 1);
-        return wkMap;
+        return new Board(wkMap);
     }
     
     /**
      * 
-     * 空のマップを返す。
+     * 空のマップオブジェクトを返す。
      *
      * @return
      */
@@ -169,7 +197,7 @@ final public  class Rule {
      *
      * @return
      */
-    public static Map<Integer, Integer> shuffleMap() {
+    private static Map<Integer, Integer> shuffleMap() {
         Map<Integer, Integer> wkMap = nullMap();
         for(int posi:wkMap.keySet()){
             wkMap.put(posi, 0);
@@ -192,11 +220,10 @@ final public  class Rule {
     
     /***
      * コマから座標を取得
-     * @param map
      * @param number
      * @return 
      */
-    public static int getPosiotionByNumber(Map<Integer, Integer> map,int number){
+    public int getPosiotionByNumber(int number){
         for(int postion:map.keySet()){
             if(map.get(postion)==number){
                 return postion;
@@ -207,13 +234,12 @@ final public  class Rule {
     
     /***
      * コマを動かしたMAPを返す。
-     * @param map
      * @param fromPosition
      * @param toPosition
      * @return 
      */
-    public static Map<Integer, Integer> putMap(Map<Integer, Integer> map,int fromPosition,int toPosition){
-        Map<Integer, Integer> newMap=new HashMap<>(map);
+    public Board putBoard(int fromPosition,int toPosition){
+        Board newMap=new Board(this.map);
         newMap.put(fromPosition, 0);
         newMap.put(toPosition, map.get(fromPosition));
         
@@ -227,18 +253,17 @@ final public  class Rule {
      * @param toPosition
      * @return 
      */
-    public static boolean checkMap(Map<Integer, Integer> map,int fromPosition,int toPosition){
-        List<Integer> list=getMovalPosition(map,fromPosition);
+    public boolean checkBoard(int fromPosition,int toPosition){
+        List<Integer> list=getMovalPosition(fromPosition);
         return list.contains(toPosition);
     }
     
     /***
      * 動かせる場所の配列を返す。
-     * @param map
      * @param position
      * @return 
      */
-    public static List<Integer> getMovalPosition(Map<Integer, Integer> map,int position){
+    public List<Integer> getMovalPosition(int position){
         List<Integer> list=new ArrayList<>();
         int number=map.get(position);
         if(number==0){
@@ -277,5 +302,118 @@ final public  class Rule {
         }
         return list;
     }
-     
+    
+    /***
+     * 起こりうる次の一手を返す。
+     * @param turnplayer
+     * @return (prev,nextのリスト)
+     */
+    public  List<Integer[]> getNodes(int turnplayer){
+        List<Integer[]> list =new ArrayList<>();
+        for(Entry<Integer,Integer> entry:map.entrySet()){
+            if(entry.getValue()*turnplayer>0){
+                int prev=entry.getKey();
+                for(int next:getMovalPosition(prev)){
+                    list.add(new Integer[]{prev,next});
+                }
+            }
+        }
+        return list;
+    }
+    
+    /***
+     * 終局判定
+     * @param map
+     * @param turnplayer
+     * @return 
+     */
+    public boolean isEnd(int turnplayer){
+        int sum=0;
+        
+        //点数勝利
+        final int[] goal;
+        if(turnplayer>0){
+            goal=new int[]{0,10,20,30,40,50};
+        }else{
+            goal=new int[]{5,15,25,35,45,55};             
+        }
+        for(int i:goal){
+            if(map.get(i)*turnplayer>0){
+                sum=map.get(i);
+            }
+        }
+        if(sum*turnplayer>=8){
+            return true;
+        }
+        //全滅判定
+        sum=0;
+        for(Entry<Integer,Integer> entry:map.entrySet()){
+            if(entry.getValue()*turnplayer<0){
+                sum+=entry.getValue();
+                break;
+            }
+        }
+        return (sum==0);
+    }
+    
+    @Override
+    public int size() {
+        return map.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return map.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return map.containsValue(value);
+    }
+
+    @Override
+    public Integer get(Object key) {
+        return map.get(key);
+    }
+
+    @Override
+    public Integer put(Integer key, Integer value) {
+        return map.put(key,value);
+    }
+
+    @Override
+    public Integer remove(Object key) {
+        return map.remove(key);
+    }
+
+    @Override
+    public void putAll(Map<? extends Integer, ? extends Integer> m) {
+        map.putAll(m);
+    }
+
+    @Override
+    public void clear() {
+        map.clear();
+    }
+
+    @Override
+    public Set<Integer> keySet() {
+        return map.keySet();
+    }
+
+    @Override
+    public Collection<Integer> values() {
+        return map.values();
+    }
+
+    @Override
+    public Set<Entry<Integer, Integer>> entrySet() {
+        return map.entrySet();
+    }
+    
 }
