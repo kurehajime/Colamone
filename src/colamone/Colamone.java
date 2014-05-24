@@ -8,11 +8,15 @@ package colamone;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -25,6 +29,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  *
@@ -37,6 +42,7 @@ public class Colamone extends Application {
     private  Scene scene;
     private StackPane root;
     private Desk desk;
+    private Timeline timeline;
 
     /***
      * 現在のマップ
@@ -71,7 +77,8 @@ public class Colamone extends Application {
     @Override   
     public void start(Stage primaryStage) {
         root = new StackPane();
-        scene = new Scene(root, 600, 600);
+        scene = new Scene(root, 600+300, 600);
+        
         desk = new Desk();
         //コマを生成
         for(int i=1;i<=8;i++){
@@ -84,8 +91,13 @@ public class Colamone extends Application {
         this.board=new Board(true);
         drawPieaceAll(this.board);
         
-        //盤を配置
-        root.getChildren().addAll(desk);
+        //ステータスを配置
+        SubPanel subpanel=new SubPanel();
+        
+        //横並びに配置
+        HBox hBox = new HBox(2);
+        hBox.getChildren().addAll(desk,subpanel);
+        root.getChildren().addAll(hBox);
         
         desk.setOnMouseClicked((event)->{
             clickEvent(event);
@@ -159,6 +171,19 @@ public class Colamone extends Application {
                     getChildren().add(rec);
                 }
             }
+        }
+    }
+    
+    /***
+     * サブパネル
+     */
+    class SubPanel extends Pane {
+
+        SubPanel() {
+            double DESK_WIDTH = PANE_SIZE * PANE_COUNT;
+            setPrefSize(300, DESK_WIDTH);
+            setMaxSize(300, DESK_WIDTH);
+            autosize();
         }
     }
 
@@ -355,10 +380,21 @@ public class Colamone extends Application {
             hoverPiece=null;
             drawPieaceAll(this.board);
             
+            //AIのターン
             if(putflg){
                 AI ai=new AI(new EvalParam());
                 HandWithPoint hwp= ai.deepThinkAllAB(board,thisTurn,4, 0, 0);
                 this.board=board.putBoard(hwp.hand[0], hwp.hand[1]);
+                //drawPieaceAll(this.board);
+                Piece p=getPieceByPosition(board, hwp.hand[1]);
+                int x2=((int) Math.ceil(hwp.hand[1]/10))*PANE_SIZE;
+                int y2=((int) Math.ceil(hwp.hand[1]%10))*PANE_SIZE;
+                timeline = new Timeline();
+                timeline.getKeyFrames().add(
+                        new KeyFrame(Duration.seconds(0.2),
+                                new KeyValue(p.layoutXProperty(), x2  ),
+                                new KeyValue(p.layoutYProperty(), y2 )));
+                timeline.playFromStart();
                 drawPieaceAll(this.board);
                 thisTurn=thisTurn*-1;
             }
@@ -371,7 +407,6 @@ public class Colamone extends Application {
      */
     void moveEvent(MouseEvent event){
         if(hoverPiece!=null){
-            
             double x=event.getSceneX()-desk.getLayoutX();
             double y=event.getSceneY()-desk.getLayoutY();
             hoverPiece.setLayoutX(x-PANE_SIZE/2);
