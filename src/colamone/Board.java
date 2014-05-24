@@ -248,7 +248,6 @@ final public  class Board implements Map<Integer, Integer>{
     
     /***
      * 動かせるかどうかチェックする。
-     * @param map
      * @param fromPosition
      * @param toPosition
      * @return 
@@ -323,7 +322,6 @@ final public  class Board implements Map<Integer, Integer>{
     
     /***
      * 終局判定
-     * @param map
      * @param turnplayer
      * @return 
      */

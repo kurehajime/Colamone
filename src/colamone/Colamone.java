@@ -332,13 +332,16 @@ public class Colamone extends Application {
                 moveEvent(event);
             }
         }else{
+            boolean putflg;
             //コマを置き換え
             int prevPisition=board.getPosiotionByNumber(hoverPiece.number);
             if(board.checkBoard(prevPisition,target_position)){
                 this.board=board.putBoard(prevPisition, target_position);
                 thisTurn=thisTurn*-1;
+                putflg=true;
             }else{
                 target_position=prevPisition;
+                putflg=false;
             }
             int target_y = (int)Math.floor(target_position % 10);
             if(this.board.get(target_position)>0 & target_y==0||this.board.get(target_position)<0 &target_y==5 ){
@@ -351,6 +354,14 @@ public class Colamone extends Application {
             
             hoverPiece=null;
             drawPieaceAll(this.board);
+            
+            if(putflg){
+                AI ai=new AI(new EvalParam());
+                HandWithPoint hwp= ai.deepThinkAllAB(board,thisTurn,4, 0, 0);
+                this.board=board.putBoard(hwp.hand[0], hwp.hand[1]);
+                drawPieaceAll(this.board);
+                thisTurn=thisTurn*-1;
+            }
         }
         
     }

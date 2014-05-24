@@ -29,7 +29,7 @@ public final class EvalParam {
     public int NEAR_WIN_POINT;
 
     
-    public void EvalParam() {
+    public EvalParam() {
         
         POSITION_BONUS.put(1, new Integer[]{0,50,100,150,300,1000});
         POSITION_BONUS.put(2, new Integer[]{0,60,120,300,600,2000});
