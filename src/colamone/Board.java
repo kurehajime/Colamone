@@ -5,6 +5,7 @@
  */
 package colamone;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +24,10 @@ final public  class Board implements Map<Integer, Integer>{
      * Map
      */
     Map<Integer, Integer> map;
+    
+    private final Integer[] GoalTop=new Integer[]{0,10,20,30,40,50};
+    private final Integer[] GoalBottom=new Integer[]{5,15,25,35,45,55};      
+        
     
     /***
      * ボードクラス
@@ -319,40 +324,83 @@ final public  class Board implements Map<Integer, Integer>{
         }
         return list;
     }
+    /***
+     * 手詰まりかどうかをチェック。
+     * @return 
+     */
+    private boolean isNoneNode(){
+        boolean flg1=false;
+        boolean flg2=false;
+        
+        for(Entry<Integer,Integer> entry:map.entrySet()){
+            if(entry.getValue()!=0){
+                int prev=entry.getKey();
+                if(!getMovalPosition(prev).isEmpty()){
+                    if(entry.getValue()>0){
+                        flg1=true;
+                    }else{
+                        flg2=true;
+                    }
+                }
+                if(flg1&&flg2){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     
     /***
      * 終局判定
-     * @param turnplayer
      * @return 
      */
-    public boolean isEnd(int turnplayer){
-        int sum=0;
+    public int isEnd(){
+        int sum1=0;
+        int sum2=0;
         
-        //点数勝利
-        final int[] goal;
-        if(turnplayer>0){
-            goal=new int[]{0,10,20,30,40,50};
+        //点数勝利        
+        for(int i:GoalTop){
+            if(map.get(i)*1>0){
+                sum1+=map.get(i);
+            }
+        }
+        for(int i:GoalBottom){
+            if(map.get(i)*-1>0){
+                sum2+=map.get(i);
+            }
+        }
+        if(sum1>=8){
+            return 1;
+        }else if(sum2<=-8){
+            return -1;
+        }
+        //手詰まりは判定
+        if(isNoneNode()){
+            if(Math.abs(sum1)>Math.abs(sum2)){
+                return 1;
+            }else{//引き分けは後攻勝利
+                return -1;
+            }
+        }
+        return 0;
+    }
+    //SCOREを取得
+    public int getScore(int turnPlayer){
+        int sum=0;
+        final Integer[] goal;
+       if(turnPlayer>0){
+            goal=GoalTop;
         }else{
-            goal=new int[]{5,15,25,35,45,55};             
+            goal=GoalBottom;  
         }
         for(int i:goal){
-            if(map.get(i)*turnplayer>0){
-                sum=map.get(i);
+            if(map.get(i)*turnPlayer>0){
+                sum+=map.get(i);
             }
         }
-        if(sum*turnplayer>=8){
-            return true;
-        }
-        //全滅判定
-        sum=0;
-        for(Entry<Integer,Integer> entry:map.entrySet()){
-            if(entry.getValue()*turnplayer<0){
-                sum+=entry.getValue();
-                break;
-            }
-        }
-        return (sum==0);
+        return Math.abs(sum);
     }
+    
     
     @Override
     public int size() {

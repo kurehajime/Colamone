@@ -59,12 +59,12 @@ public class AI {
      * @return
      */
     private int evalBoard(Board board, int turnplayer) {
-        if (board.isEnd(1) == true) {
+        int end=board.isEnd();
+        if (end==1) {
             return +999999 * turnplayer;
-        } else if (board.isEnd(-1) == true) {
+        } else if (end==-1) {
             return -999999;
         }
-
         int ev = 0;
         Board evBoard = new Board(board);
         //ZOCを取得
@@ -110,7 +110,7 @@ public class AI {
         return ev;
     }
 
-    //よく考える。 node=[q,map0]
+    //よく考える。
     public HandWithPoint deepThinkAllAB(Board board, int turn_player, int depth, int a, int b) {
         int best_score = turn_player * 9999999 * -1;
         Integer[] besthand = null;
@@ -127,12 +127,13 @@ public class AI {
         for (Integer[] NodePair : nodeList) {
             Integer[] hand = NodePair;
             Board board2 = board.putBoard(hand[0], hand[1]);
+            int end=board2.isEnd();
             //必勝
-            if (board2.isEnd(turn_player)) {
+            if (end*turn_player>0) {
                 return new HandWithPoint(hand, 999999 * turn_player);
             }
             //必敗
-            if (board2.isEnd(turn_player * -1)) {
+            if (end*turn_player<0) {
                 if (besthand == null) {
                     best_score = 999999 * turn_player * -1;
                     besthand = hand;
