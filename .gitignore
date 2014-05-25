@@ -1,1 +1,10 @@
 Colamone/dist/web-files/ 
+*.jar
+
+*.dmg
+
+.gitignore
+
+dist/bundles/Colamone.dmg
+
+dist/bundles/Colamone.dmg

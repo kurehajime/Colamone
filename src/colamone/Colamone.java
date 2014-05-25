@@ -7,12 +7,10 @@ package colamone;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.DropShadow;
@@ -99,18 +97,12 @@ public class Colamone extends Application {
         HBox hBox = new HBox(2);
         hBox.getChildren().addAll(desk,subpanel);
         root.getChildren().addAll(hBox);
-        desk.setOnMouseClicked(new EventHandler<MouseEvent>(){
-            @Override
-            public void handle(MouseEvent event) {
-                clickEvent(event);
-            }
-        }  );
-        desk.setOnMouseMoved(new EventHandler<MouseEvent>(){
-            @Override
-            public void handle(MouseEvent event) {
-                moveEvent(event);
-            }
-        }  );
+        desk.setOnMouseClicked((MouseEvent event) -> {
+            clickEvent(event);
+        });
+        desk.setOnMouseMoved((MouseEvent event) -> {
+            moveEvent(event);
+        });
         thisTurn=1;
         
         primaryStage.setTitle("Colamone");
@@ -123,29 +115,24 @@ public class Colamone extends Application {
      * @param wkMap 
      */
     private void drawPieaceAll(Map<Integer, Integer> wkMap){
-        for(Entry<Integer,Integer> entry:wkMap.entrySet()){
-            if(entry.getValue()!=0){
-                    int x=((int) Math.ceil(entry.getKey()/10))*PANE_SIZE;
-                    int y=((int) Math.ceil(entry.getKey()%10))*PANE_SIZE;
-                    Piece p=getPieceByNumber(entry.getValue());
-                    p.setLayoutX(x);
-                    p.setLayoutY(y);
-                    int target_y = (int)Math.floor(entry.getKey() % 10);
-                    if(entry.getValue()>0 & target_y==0||entry.getValue()<0 &target_y==5 ){
-                        //ゴールした。
-                        p.setGoal();
-                    }else{
-                        //標準に戻す。
-                        p.setDefault();
-                    }
-                    
+        wkMap.entrySet().stream().filter((entry) -> (entry.getValue()!=0)).forEach((entry) -> {
+            int x=((int) Math.ceil(entry.getKey()/10))*PANE_SIZE;
+            int y=((int) Math.ceil(entry.getKey()%10))*PANE_SIZE;
+            Piece p=getPieceByNumber(entry.getValue());
+            p.setLayoutX(x);
+            p.setLayoutY(y);
+            int target_y = (int)Math.floor(entry.getKey() % 10);
+            if(entry.getValue()>0 & target_y==0||entry.getValue()<0 &target_y==5 ){
+                //ゴールした。
+                p.setGoal();
+            }else{
+                //標準に戻す。
+                p.setDefault();
             }
-        }
-        for(Piece p:pieces){
-            if(board.getPosiotionByNumber(p.number)==-1){
-                p.setNoActive();
-            }
-        }
+        });
+        pieces.stream().filter((p) -> (board.getPosiotionByNumber(p.number)==-1)).forEach((p) -> {
+            p.setNoActive();
+        });
         
     }
     
