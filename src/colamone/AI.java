@@ -59,7 +59,7 @@ public class AI {
      * @return
      */
     private int evalBoard(Board board, int turnplayer) {
-        int end=board.isEnd();
+        int end=board.isEndNear();
         if (end==1) {
             return +999999 * turnplayer;
         } else if (end==-1) {
@@ -127,7 +127,7 @@ public class AI {
         for (Integer[] NodePair : nodeList) {
             Integer[] hand = NodePair;
             Board board2 = board.putBoard(hand[0], hand[1]);
-            int end=board2.isEnd();
+            int end=board2.isEndNear();
             //必勝
             if (end*turn_player>0) {
                 return new HandWithPoint(hand, 999999 * turn_player);

@@ -5,7 +5,6 @@
  */
 package colamone;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +25,11 @@ final public  class Board implements Map<Integer, Integer>{
     Map<Integer, Integer> map;
     
     private final Integer[] GoalTop=new Integer[]{0,10,20,30,40,50};
-    private final Integer[] GoalBottom=new Integer[]{5,15,25,35,45,55};      
+    private final Integer[] GoalBottom=new Integer[]{5,15,25,35,45,55}; 
+    
+    public int turn =1;
+    public boolean lock=false;
+    
         
     
     /***
@@ -247,7 +250,8 @@ final public  class Board implements Map<Integer, Integer>{
         Board newMap=new Board(this.map);
         newMap.put(fromPosition, 0);
         newMap.put(toPosition, map.get(fromPosition));
-        
+        newMap.lock=this.lock;
+        newMap.turn=this.turn;
         return newMap;
     }
     
@@ -374,6 +378,42 @@ final public  class Board implements Map<Integer, Integer>{
         }else if(sum2<=-8){
             return -1;
         }
+        
+        //手詰まりは判定
+        if(isNoneNode()){
+            if(Math.abs(sum1)>Math.abs(sum2)){
+                return 1;
+            }else{//引き分けは後攻勝利
+                return -1;
+            }
+        }        
+        return 0;
+    }
+        /***
+     * 終局判定(実質的終局含む)
+     * @return 
+     */
+    public int isEndNear(){
+        int sum1=0;
+        int sum2=0;
+        
+        //点数勝利        
+        for(int i:GoalTop){
+            if(map.get(i)*1>0){
+                sum1+=map.get(i);
+            }
+        }
+        for(int i:GoalBottom){
+            if(map.get(i)*-1>0){
+                sum2+=map.get(i);
+            }
+        }
+        if(sum1>=8){
+            return 1;
+        }else if(sum2<=-8){
+            return -1;
+        }
+        
         //手詰まりは判定
         if(isNoneNode()){
             if(Math.abs(sum1)>Math.abs(sum2)){
@@ -382,6 +422,23 @@ final public  class Board implements Map<Integer, Integer>{
                 return -1;
             }
         }
+        //実質的判定勝利勝利
+        int live1=0;
+        int live2=0; 
+        for(int i:map.values()){
+            if(i>0){
+                live1+=Math.abs(i);
+            }else if(i<0){
+                live2+=Math.abs(i);
+            }
+        }
+        if(sum1>live2){
+            return 1;
+        }else if(sum2<=-1*live1){
+            return -1;
+        }
+        
+        
         return 0;
     }
     //SCOREを取得

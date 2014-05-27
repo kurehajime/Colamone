@@ -15,6 +15,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
@@ -77,12 +78,14 @@ public class Colamone extends Application {
      * *
      * 今のターン
      */
-    public volatile AtomicInteger thisTurn = new AtomicInteger(0);
+    //private final  AtomicInteger thisTurn = new AtomicInteger(0);
 
     /***
      * 考え中
      */
-    public volatile AtomicBoolean thinking = new AtomicBoolean(false);
+    //private  final  AtomicBoolean thinking = new AtomicBoolean(false);
+    
+    
     
     /**
      * main
@@ -113,7 +116,7 @@ public class Colamone extends Application {
         desk.getChildren().addAll(pieces);
 
         //コマを配置
-        thisTurn.set(1);
+        board.turn=1;
         this.board = new Board(true);
         drawPieaceAll(this.board);
 
@@ -130,14 +133,13 @@ public class Colamone extends Application {
         desk.setOnMouseMoved((event) -> {
             moveEvent(event);
         });
-
         drawSubPanel();
 
         primaryStage.setTitle("Colamone");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
+    
     /**
      * *
      * コマをすべて描画
@@ -165,6 +167,8 @@ public class Colamone extends Application {
         });
 
     }
+    
+    
 
     /**
      * *
@@ -172,18 +176,18 @@ public class Colamone extends Application {
      */
     private void drawSubPanel() {
 
-        if (thisTurn.get() == 1) {
+        if (board.turn == 1) {
             subPanel.setTitle("Blue Turn", Color.BLUE);
-        } else if (thisTurn.get() == -1) {
+        } else if (board.turn == -1) {
             subPanel.setTitle("Red Turn", Color.RED);
         }
         int end=board.isEnd();
         if (end==1) {
             subPanel.setTitle("BLUE WIN !", Color.BLUE);
-            thisTurn.set(0);
+            board.turn=0;
         } else if (end==-1) {
             subPanel.setTitle("RED  WIN !", Color.RED);
-            thisTurn.set(0);
+            board.turn=0;
         }
         
        subPanel.setScore("Blue:"+Integer.toString(this.board.getScore(1))
@@ -207,13 +211,13 @@ public class Colamone extends Application {
         double y = event.getSceneY() - desk.getLayoutY();
         int target_position = (int) (Math.floor(x / PANE_SIZE) * 10 + Math.floor(y / PANE_SIZE));
 
-        if (thisTurn.get() == 0||thinking.get()==true) {
+        if (this.board.turn == 0||this.board.lock==true) {
             return;
         }
 
         if (hoverPiece == null) {
             //コマを持ち上げる
-            if (this.board.get(target_position) != 0 && this.board.get(target_position) * thisTurn.get() > 0) {
+            if (this.board.get(target_position) != 0 && this.board.get(target_position) * this.board.turn > 0) {
                 hoverPiece = getPieceByPosition(this.board, target_position);
                 hoverPiece.setHover();
                 hoverPiece.toFront();
@@ -225,8 +229,8 @@ public class Colamone extends Application {
             int prevPisition = board.getPosiotionByNumber(hoverPiece.number);
             if (board.checkBoard(prevPisition, target_position)) {
                 this.board = board.putBoard(prevPisition, target_position);
-                thisTurn.set(-1 * thisTurn.get());
-                putflg = true;
+                this.board.turn*=-1;
+                putflg = true;                
                 drawSubPanel();
             } else {
                 putflg = false;
@@ -235,11 +239,14 @@ public class Colamone extends Application {
             hoverPiece = null;
             drawPieaceAll(this.board);
             drawSubPanel();
+            
 
             //AIのターン
-            if (putflg && thisTurn.get() != 0) {
+            if (putflg && this.board.turn != 0) {
                 final Task<Boolean> task1 = getAITask();  // ★1Taskを作成 
-                task1.run();
+                //task1.run();                
+                Executors.newSingleThreadExecutor().submit(task1);                   //タスクを実行
+                                
             }
 
         }
@@ -252,14 +259,14 @@ public class Colamone extends Application {
      *
      * @return
      */
-    private Task<Boolean> getAITask() {
+    private  Task<Boolean> getAITask() {
         return new Task<Boolean>() {
             @Override
-            protected Boolean call() throws Exception {
-                thinking.getAndSet(true);
+            protected  Boolean call() throws Exception {
+                board.lock =true;
                 AI ai = new AI(new EvalParam());
                 int depth = level + 1;
-                HandWithPoint hwp = ai.deepThinkAllAB(board, thisTurn.get(), depth, 0, 0);
+                HandWithPoint hwp = ai.deepThinkAllAB(board, board.turn, depth, 0, 0);
                 board = board.putBoard(hwp.hand[0], hwp.hand[1]);
                 Piece p = getPieceByPosition(board, hwp.hand[1]);
                 int x2 = ((int) Math.ceil(hwp.hand[1] / 10)) * PANE_SIZE;
@@ -270,11 +277,14 @@ public class Colamone extends Application {
                                 new KeyValue(p.layoutXProperty(), x2),
                                 new KeyValue(p.layoutYProperty(), y2)));
                 timeline.playFromStart();
-                drawPieaceAll(board);
-                thisTurn.getAndSet(1);
-                thinking.getAndSet(false);
-                drawSubPanel();
-                Runtime.getRuntime().gc();
+                board.turn*=-1;
+                board.lock=false;
+                Platform.runLater(()->{
+                    drawSubPanel();
+                    drawPieaceAll(board);
+                    Runtime.getRuntime().gc();
+                });
+
                 return true;
             }
         };
@@ -329,7 +339,6 @@ public class Colamone extends Application {
      */
     void reStart() {
         this.board = new Board(true);
-        thisTurn.set(1);
         drawPieaceAll(this.board);
         drawSubPanel();
     }
@@ -389,10 +398,6 @@ public class Colamone extends Application {
             return super.localToParent(localBounds); //To change body of generated methods, choose Tools | Templates.
         }
 
-        int getLevel() {
-            return (int) Math.round(slider.getValue());
-        }
-
         void setTitle(String s, Color c) {
             topLabel.setText(s);
             topLabel.setTextFill(c);
@@ -433,7 +438,7 @@ public class Colamone extends Application {
             slider.setBlockIncrement(1);
             slider.setMajorTickUnit(1f);
             slider.valueProperty().addListener((event) -> {
-                level = getLevel();
+                level = (int) Math.round(slider.getValue());
             });
 
             //セパレータ
@@ -615,7 +620,7 @@ public class Colamone extends Application {
 
         /**
          * *
-         * 掴んだ時。
+         * 標準。
          */
         public void setDefault() {
             if (number > 0) {
@@ -628,7 +633,7 @@ public class Colamone extends Application {
 
         /**
          * *
-         * 掴んだ時。
+         * ゴールした時。
          */
         public void setGoal() {
             if (number > 0) {
