@@ -115,7 +115,7 @@ public class Colamone extends Application {
 
         //コマを配置
         board.turn=1;
-        this.board = new Board(false);
+        this.board = new Board(true);
         drawPieaceAll(this.board);
 
         //ステータスを配置
