@@ -9,10 +9,10 @@ package colamone;
 /***
  * 手(Prev,Next)と評価値
  */
-public class HandWithPoint {
+public final class HandWithPoint {
 
-    Integer[] hand;
-    int point;
+    final Integer[] hand;
+    final int point;
 
     public HandWithPoint(Integer[] hand, int point) {
         this.hand = hand;

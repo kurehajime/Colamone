@@ -280,9 +280,9 @@ final public  class Board implements Map<Integer, Integer>{
         int x = (int)Math.floor(position / 10);
         int y = (int)Math.floor(position % 10);
         //アガリのコマは動かしたらダメ。
-        if(number>0 & y==0){
+        if(number>0 && y==0){
             return list;   
-        }else if(number<0 &y==5){
+        }else if(number<0 && y==5){
             return list;   
         }
         int[] PIECES=getMoveArray(number);
@@ -434,7 +434,7 @@ final public  class Board implements Map<Integer, Integer>{
         }
         if(sum1>live2){
             return 1;
-        }else if(sum2<=-1*live1){
+        }else if(-1*sum2>=live1){
             return -1;
         }
         

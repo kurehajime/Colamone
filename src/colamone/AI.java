@@ -6,7 +6,6 @@
 package colamone;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -27,31 +26,6 @@ public class AI {
 
     /**
      * *
-     * ZOCを返す
-     *
-     * @param board
-     * @param turnplayer
-     * @return
-     */
-    private Map<Integer, Integer> getZocMap(Board board) {
-        Map<Integer, Integer> zocMap = Board.nullMap();
-        for (Map.Entry<Integer, Integer> entry : zocMap.entrySet()) {
-            if (entry.getValue() != 0) {
-                List<Integer> canmove = board.getMovalPosition(entry.getKey());
-                for (int p : canmove) {
-                    if (entry.getValue() > 0) {
-                        zocMap.put(p, zocMap.get(p) + 1);
-                    } else {
-                        zocMap.put(p, zocMap.get(p) + 1);
-                    }
-                }
-            }
-        }
-        return zocMap;
-    }
-
-    /**
-     * *
      * 局面を評価する
      *
      * @param board
@@ -66,26 +40,10 @@ public class AI {
             return -999999;
         }
         int ev = 0;
-        Board evBoard = new Board(board);
-        //ZOCを取得
-        Map<Integer, Integer> zocMap = getZocMap(evBoard);
-        //次にすぐ取られるコマは死んだ扱い。
-        boolean death_flag = false;
-        for (Entry<Integer, Integer> zentry : zocMap.entrySet()) {
-            if (zentry.getValue() * turnplayer < 0 && evBoard.get(zentry.getKey()) * turnplayer > 0) {
-                evBoard.put(zentry.getKey(), 0);
-                death_flag = true;
-            }
-        }
-        if (death_flag) {
-            zocMap = getZocMap(evBoard);
-        }
-
         //評価
-        for (Entry<Integer, Integer> entry : evBoard.entrySet()) {
+        for (Entry<Integer, Integer> entry : board.entrySet()) {
             final int number = entry.getValue();//コマ
             final int position = entry.getKey();
-            final int z = zocMap.get(position);//ZOC
             final int player = (int) Math.signum(number);
             int line = 0;
             if (number > 0) {
@@ -99,13 +57,6 @@ public class AI {
                 //ポジションボーナス
                 ev += evalParam.POSITION_BONUS.get(Math.abs(number))[line] * player;
             }
-
-            //ZOC連携ボーナス
-            if (number * z > 0) {
-                ev += evalParam.EFF_POINT * z;
-            }
-            //空き地ZOCボーナス
-            ev += z * evalParam.ZOC_POINT;
         }
         return ev;
     }

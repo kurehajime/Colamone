@@ -25,9 +25,6 @@ public final class EvalParam {
     //コマの価値
     public int EFF_POINT;
 
-    //コマの価値
-    public int NEAR_WIN_POINT;
-
     
     public EvalParam() {
         
@@ -48,12 +45,6 @@ public final class EvalParam {
         PIECE_POINT.put(6, 2700);
         PIECE_POINT.put(7, 2500);
         PIECE_POINT.put(8, 2500);
-        
-        ZOC_POINT=80;
-        
-        EFF_POINT=250;
-        
-        NEAR_WIN_POINT=6000;
-        
+               
     }
 }

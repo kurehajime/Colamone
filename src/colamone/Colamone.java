@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -117,7 +115,7 @@ public class Colamone extends Application {
 
         //コマを配置
         board.turn=1;
-        this.board = new Board(true);
+        this.board = new Board(false);
         drawPieaceAll(this.board);
 
         //ステータスを配置
