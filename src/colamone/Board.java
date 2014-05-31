@@ -441,6 +441,7 @@ final public  class Board implements Map<Integer, Integer>{
         
         return 0;
     }
+    
     //SCOREを取得
     public int getScore(int turnPlayer){
         int sum=0;
@@ -457,7 +458,17 @@ final public  class Board implements Map<Integer, Integer>{
         }
         return Math.abs(sum);
     }
-    
+    @Override
+    public String toString(){
+        String s="";
+        for(int r=0;r<=5;r++){
+            for(int c=0;c<=5;c++){
+               s+=String.format("%1$+1d", map.get(c*10+r));
+            }
+            s+="\n";
+        }
+        return s;
+    }
     
     @Override
     public int size() {

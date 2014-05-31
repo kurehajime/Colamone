@@ -160,7 +160,8 @@ public class Colamone extends Application {
                 p.setDefault();
             }
         });
-        pieces.stream().filter((p) -> (board.getPosiotionByNumber(p.number) == -1)).forEach((p) -> {
+        
+        pieces.stream().filter((p) -> ((new Board(wkMap)).getPosiotionByNumber(p.number) == -1)).forEach((p) -> {
             p.setNoActive();
         });
 
@@ -262,7 +263,7 @@ public class Colamone extends Application {
             @Override
             protected  Boolean call() throws Exception {
                 board.lock =true;
-                AI ai = new AI(new EvalParam());
+                AI ai = new AI(new EvalParam(1));
                 int depth = level + 1;
                 HandWithPoint hwp = ai.deepThinkAllAB(board, board.turn, depth, 0, 0);
                 board = board.putBoard(hwp.hand[0], hwp.hand[1]);
@@ -282,7 +283,8 @@ public class Colamone extends Application {
                     drawPieaceAll(board);
                     Runtime.getRuntime().gc();
                 });
-
+                        System.out.print(board.toString());
+                        System.out.println("");
                 return true;
             }
         };
@@ -473,11 +475,54 @@ public class Colamone extends Application {
             +"　その時点で点数の高い方が勝利です。\n"
             +"・ただし同点の場合は後手勝利になります。\n"
             );
+//            //テスト
+//            Separator separator4 = new Separator();
+//            separator4.setMinWidth(300);
+//            separator4.setOrientation(Orientation.HORIZONTAL);
+//            Button button2 = new Button("Button1");
+//            button2.setMinWidth(300);
+//            button2.setOnMouseClicked((event) -> {
+//                reStart();
+//                button2.setDisable(true);
+//                System.out.println("----------------------------------");
+//                EvalParam ep1=new EvalParam(1);
+//                EvalParam ep2=Testing.changeEvalParam(ep1, 0.3,1);
+//                int[] win = Testing.vsLoop(ep1,ep2, 3, true,10);
+//                
+//                EvalParam  bestep= Testing.vsTournament(ep1, 3, 3, 10);
+//                System.out.println(bestep.toString());
+//                button2.setDisable(false);
+//                Runtime.getRuntime().gc();
+//            });
+//            
+//            Button button3 = new Button("Button2");
+//            button3.setMinWidth(300);
+//            button3.setOnMouseClicked((event) -> {
+//                reStart();
+//                button3.setDisable(true);
+//                System.out.println("----------------------------------");
+//                EvalParam ep1=new EvalParam(0);
+//                EvalParam ep2=new EvalParam(1);
+//                Testing.vs(ep1,ep2, 3, true,(b)->{
+//                    System.out.print(b.toString());
+//                    System.out.println("");
+//                    drawPieaceAll(b);
+//                });
+//
+//                button3.setDisable(false);
+//                Runtime.getRuntime().gc();
+//            });
+//            
+            
             
             //垂直に配置
             vBox.getChildren().addAll(topLabel, separator0,
                     sLabel, slider, separator1, scoreLabel, separator2, button,
                     separator3,manuLabel);
+//            //垂直に配置(テスト用)
+//            vBox.getChildren().addAll(
+//                    separator4,button2,button3);
+            
             this.getChildren().add(vBox);
             autosize();
         }
