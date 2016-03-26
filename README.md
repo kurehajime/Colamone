@@ -1,7 +1,11 @@
 Colamone
 ========
+
+### [Colamone](http://xiidec.appspot.com/colamone/colamone.html)
+
+↑
+
 これのJava版
-http://xiidec.appspot.com/myboardgame/boardgame.html
 
 
 Java8以降で動きます。
